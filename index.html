@@ -1,0 +1,63 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ethereum Messaging DApp</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Ethereum Message DApp</h1>
+
+    <p><strong>Your Account:</strong> <span id="account">Loading...</span></p>
+
+    <input type="text" id="recipient" placeholder="Recipient Address">
+    <input type="text" id="message" placeholder="Type your message">
+    <button onclick="sendMessage()">Send Message</button>
+
+    <h2>Your Inbox</h2>
+    <ul id="messageList"></ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Ethereum Chat DApp</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <h1>Ethereum Chat DApp</h1>
+    <p><strong>Your Address:</strong> <span id="account">Loading...</span></p>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>Inbox</h3>
+            <ul id="userList"></ul>
+        </div>
+
+        <div class="chatbox">
+            <div id="chatHeader">Select a user to chat</div>
+            <ul id="chatMessages"></ul>
+
+            <div class="chat-inputs">
+                <input type="text" id="recipient" placeholder="Recipient Address" />
+                <input type="text" id="message" placeholder="Type a message..." />
+                <button id="sendBtn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
