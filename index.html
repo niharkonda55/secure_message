@@ -3,33 +3,28 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Ethereum Chat DApp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DApp Chat</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-    <h1>Ethereum Chat DApp</h1>
-    <p><strong>Your Address:</strong> <span id="account">Loading...</span></p>
-
     <div class="container">
         <div class="sidebar">
-            <h3>Inbox</h3>
-            <ul id="userList"></ul>
+            <h2>Inbox</h2>
+            <ul id="inbox" class="inbox-list"></ul>
         </div>
-
-        <div class="chatbox">
-            <div id="chatHeader">Select a user to chat</div>
-            <ul id="chatMessages"></ul>
-
-            <div class="chat-inputs">
-                <input type="text" id="recipient" placeholder="Recipient Address" />
-                <input type="text" id="message" placeholder="Type a message..." />
+        <div class="main">
+            <div class="account" id="account">Connecting...</div>
+            <div class="conversation" id="conversation"></div>
+            <div class="form">
+                <input type="text" id="recipient" placeholder="Recipient address" />
+                <input type="text" id="message" placeholder="Message" />
                 <button id="sendBtn">Send</button>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <script src="app.js"></script>
 </body>
 

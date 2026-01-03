@@ -1,4 +1,8 @@
-const contractAddress = "0xB7B066f0057BB06cA909cC7818E13Ac15E9b5355";
+let web3;
+let contract;
+let account;
+let selectedAddress = null;
+
 const contractABI = [
     {
         "inputs": [
@@ -19,14 +23,25 @@ const contractABI = [
         "type": "function"
     },
     {
-        "inputs": [],
-        "name": "getMessages",
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "user",
+                "type": "address"
+            }
+        ],
+        "name": "getInbox",
         "outputs": [
             {
                 "components": [
                     {
                         "internalType": "address",
                         "name": "sender",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "recipient",
                         "type": "address"
                     },
                     {
@@ -40,7 +55,7 @@ const contractABI = [
                         "type": "uint256"
                     }
                 ],
-                "internalType": "struct MessageContract.Message[]",
+                "internalType": "struct SecureMessage.Message[]",
                 "name": "",
                 "type": "tuple[]"
             }
@@ -52,131 +67,127 @@ const contractABI = [
         "inputs": [
             {
                 "internalType": "address",
-                "name": "",
+                "name": "user",
                 "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
             }
         ],
-        "name": "messages",
+        "name": "getOutbox",
         "outputs": [
             {
-                "internalType": "address",
-                "name": "sender",
-                "type": "address"
-            },
-            {
-                "internalType": "string",
-                "name": "content",
-                "type": "string"
-            },
-            {
-                "internalType": "uint256",
-                "name": "timestamp",
-                "type": "uint256"
+                "components": [
+                    {
+                        "internalType": "address",
+                        "name": "sender",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "recipient",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "content",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "timestamp",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct SecureMessage.Message[]",
+                "name": "",
+                "type": "tuple[]"
             }
         ],
         "stateMutability": "view",
         "type": "function"
     }
 ];
-
-let web3;
-let contract;
-let account;
+const contractAddress = "0x0025Bb8715A3f4C86159B7F25613333084c22845";
 
 window.addEventListener("load", async () => {
     if (window.ethereum) {
         web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
-
         const accounts = await web3.eth.getAccounts();
         account = accounts[0];
-        document.getElementById("account").innerText = account;
+        document.getElementById("account").textContent = `Connected: ${account}`;
 
         contract = new web3.eth.Contract(contractABI, contractAddress);
-
-        document.getElementById("sendBtn").addEventListener("click", sendMessage);
-
         loadInbox();
     } else {
-        alert("Please install MetaMask");
+        alert("Please install MetaMask.");
     }
 });
 
 async function loadInbox() {
-    const messages = await contract.methods.getMessages().call({ from: account });
-    const users = new Set();
+    const messages = await contract.methods.getInbox(account).call();
+    const inboxList = document.getElementById("inbox");
+    inboxList.innerHTML = "";
 
-    messages.forEach(msg => {
-        users.add(msg.sender.toLowerCase());
-    });
+    const uniqueSenders = [...new Set(messages.map(msg => msg.sender))];
 
-    const userList = document.getElementById("userList");
-    userList.innerHTML = "";
-
-    users.forEach(user => {
+    uniqueSenders.forEach(sender => {
         const li = document.createElement("li");
-        li.innerText = user;
-        li.style.cursor = "pointer";
-        li.onclick = () => loadConversation(user);
-        userList.appendChild(li);
+        li.textContent = sender;
+        li.onclick = () => {
+            document.querySelectorAll("#inbox li").forEach(el => el.classList.remove("active"));
+            li.classList.add("active");
+            loadConversation(sender);
+        };
+        inboxList.appendChild(li);
     });
 }
 
-async function loadConversation(selectedUser) {
-    const received = await contract.methods.getMessages().call({ from: account });
-    const sent = await contract.methods.getMessages().call({ from: selectedUser });
+async function loadConversation(address) {
+    selectedAddress = address;
+    const all = await contract.methods.getInbox(account).call();
+    const sent = await contract.methods.getOutbox(account).call();
 
-    const messages = [];
+    const filtered = [
+        ...all.filter(m => m.sender === address),
+        ...sent.filter(m => m.recipient === address)
+    ].sort((a, b) => a.timestamp - b.timestamp);
 
-    received.forEach(m => {
-        if (m.sender.toLowerCase() === selectedUser.toLowerCase()) {
-            messages.push({ ...m, type: "received" });
-        }
+    const convo = document.getElementById("conversation");
+    convo.innerHTML = "";
+
+    filtered.forEach(msg => {
+        const div = document.createElement("div");
+        const isYou = msg.sender === account;
+
+        div.className = isYou ? "message message-you" : "message message-them";
+
+        const time = new Date(msg.timestamp * 1000).toLocaleString();
+
+        div.innerHTML = `
+            <div class="bubble">${msg.content}</div>
+            <div class="timestamp">${time}</div>
+        `;
+        convo.appendChild(div);
     });
 
-    sent.forEach(m => {
-        if (m.sender.toLowerCase() === account.toLowerCase()) {
-            messages.push({ ...m, type: "sent" });
-        }
-    });
-
-    messages.sort((a, b) => a.timestamp - b.timestamp);
-
-    const chat = document.getElementById("chatMessages");
-    chat.innerHTML = "";
-
-    messages.forEach(m => {
-        const li = document.createElement("li");
-        li.className = m.type;
-        const time = new Date(m.timestamp * 1000).toLocaleTimeString();
-        li.innerHTML = `<span>${m.content}</span><div class="timestamp">${time}</div>`;
-        chat.appendChild(li);
-    });
-
-    document.getElementById("chatHeader").innerText = `Chat with: ${selectedUser}`;
-    document.getElementById("recipient").value = selectedUser;
+    convo.scrollTop = convo.scrollHeight;
 }
 
-async function sendMessage() {
-    const recipient = document.getElementById("recipient").value;
-    const message = document.getElementById("message").value;
 
-    if (!web3.utils.isAddress(recipient)) {
-        alert("Invalid address");
-        return;
+document.getElementById("sendBtn").addEventListener("click", async () => {
+    const to = document.getElementById("recipient").value || selectedAddress;
+    const msg = document.getElementById("message").value;
+
+    if (!web3.utils.isAddress(to)) {
+        return alert("Invalid recipient address.");
     }
 
-    if (message.trim() === "") {
-        alert("Message cannot be empty");
-        return;
-    }
+    if (!msg) return alert("Message cannot be empty.");
 
-    await contract.methods.sendMessage(recipient, message).send({ from: account });
+    await contract.methods.sendMessage(to, msg).send({ from: account });
     document.getElementById("message").value = "";
-    loadConversation(recipient);
-}
+
+    if (selectedAddress === to) {
+        loadConversation(to);
+    }
+    loadInbox();
+});
